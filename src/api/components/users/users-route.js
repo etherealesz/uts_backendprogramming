@@ -13,7 +13,7 @@ module.exports = (app) => {
   // Get list of users
   route.get('/', authenticationMiddleware, usersControllers.getUsers);
 
-  route.get('/users?page_number=1&page_number=10', authenticationMiddleware, usersControllers.getUsers);
+  route.get('/users', authenticationMiddleware, usersControllers.getUsers);
 
   // Create user
   route.post(

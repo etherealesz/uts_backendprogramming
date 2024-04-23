@@ -1,6 +1,6 @@
 const usersService = require('./users-service');
 const { errorResponder, errorTypes } = require('../../../core/errors');
-
+const User = require('../../../models/index').User;
 
 /**
  * Handle get list of users request
@@ -12,10 +12,28 @@ const { errorResponder, errorTypes } = require('../../../core/errors');
 async function getUsers(request, response, next) {
   try {
     const users = await usersService.getUsers();
-    const pageNumber = req.query.page_number || 1;
-    const pageSize = req.query.page_number || 10;
-
-    return response.status(200).json(users);
+    const pageNumber = parseInt(request.query.page_number) || 1;
+    const pageSize = parseInt(request.query.page_size) || 3; 
+    let totalItem;
+    
+    const user = users.splice((pageNumber-1)*pageSize, pageSize)
+    User.find().countDocuments()
+      .then(count => {
+        totalItem = count;
+        
+          User.find()
+          .skip((parseInt(pageNumber) - 1) * parseInt(pageSize))
+          .limit(parseInt(pageSize))
+      })
+      .then(result => {
+        response.status(200).json({
+          data: result,
+          totalData: totalItem,
+          page_number: parseInt(pageNumber),
+          page_size: parseInt(pageSize),
+          user
+        });
+      });
   } catch (error) {
     return next(error);
   }
