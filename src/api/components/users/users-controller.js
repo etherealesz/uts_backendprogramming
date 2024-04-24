@@ -37,29 +37,49 @@ async function getUsers(request, response, next) {
     } else if(sort === 'name:desc') {
       sortField = 'name';
       sortDef = 'desc';
+    } else if(sort === 'email:asc'){
+      sortField = 'email';
+      sortDef = 'asc';
+    } else if(sort === 'id:asc'){
+      sortField = 'id';
+      sortDef = 'asc';
+    } else if(sort === 'name:asc'){
+      sortField = 'name';
+      sortDef = 'asc';
     }
 
     let totalItem;
+    let hasPrevious;
+    let hasNext;
+    let totalPages;
+
     const users = await usersService.getUsers(searchField, searchV, sortField, sortDef);
     
     const user = users.splice((pageNumber-1) * pageSize, pageSize);
 
-    User.find().countDocuments()
-      .then(count => {
+    User.find().countDocuments().then(count => {
         totalItem = count;
+        hasPrevious = pageNumber > 1;
+        hasNext = pageNumber < totalPages;
+        totalPages = Math.ceil(totalItem/pageSize);
+
           User.find()
           .skip((parseInt(pageNumber) - 1) * parseInt(pageSize))
           .limit(parseInt(pageSize))
-      })
-      .then(result => {
+
+      }).then(result => {
         response.status(200).json({
           data: result,
           totalData: totalItem,
+          total_pages: totalPages,
+          has_previous_page: hasPrevious,
+          has_next_page: hasNext,
           page_number: parseInt(pageNumber),
           page_size: parseInt(pageSize),
           user
         });
       });
+
   } catch (error) {
     return next(error);
   }

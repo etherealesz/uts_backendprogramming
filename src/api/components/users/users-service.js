@@ -5,45 +5,46 @@ const { hashPassword, passwordMatched } = require('../../../utils/password');
  * Get list of users
  * @returns {Array}
  */
-async function getUsers(searchField = '', searchV = '', sortField = '', sortOrder = 'asc') {
+async function getUsers(
+  searchField = '',
+  searchV = '',
+  sortField = '',
+  sortOrder = 'asc'
+) {
   let users = await usersRepository.getUsers();
 
-  switch(searchField){
+  switch (searchField) {
     case 'email':
-      users = users.filter(user => user.email.includes(searchV))
+      users = users.filter((user) =>
+        user.email.toLowerCase().includes(searchV)
+      );
       break;
     case 'name':
-      users = users.filter(user => user.name.includes(searchV));
+      users = users.filter((user) => user.name.toLowerCase().includes(searchV));
       break;
   }
-  
 
-  switch(sortField){
+  switch (sortField) {
     case 'email':
-      users = await usersRepository.sortByEmail();
-      if(sortOrder === 'desc'){
-        users = await usersRepository.sortByEmailDesc();
-      }
-      else{
-        users = await usersRepository.sortByEmail();
+      // users = await usersRepository.sortByEmail();
+      if (sortOrder === 'desc') {
+        users = users.sort((a, b) => a.email.localeCompare(b.email)).reverse();
+      } else {
+        users = users.sort((a, b) => a.email.localeCompare(b.email));
       }
       break;
     case 'id':
-      users = await usersRepository.sortById();
-      if(sortOrder === 'desc'){
-        users = await usersRepository.sortByIdDesc();
-      }
-      else{
-        users = await usersRepository.sortById();
+      if (sortOrder === 'desc') {
+        users = users.sort((a, b) => a.id.localeCompare(b.id)).reverse();
+      } else {
+        users = users.sort((a, b) => a.id.localeCompare(b.id));
       }
       break;
     case 'name':
-      users = await usersRepository.sortByName();
-      if(sortOrder === 'desc'){
-        users = await usersRepository.sortByNameDesc();
-      }
-      else{
-        users = await usersRepository.sortByName();
+      if (sortOrder === 'desc') {
+        users = users.sort((a, b) => a.name.localeCompare(b.name)).reverse();
+      } else {
+        users = users.sort((a, b) => a.name.localeCompare(b.name));
       }
       break;
   }
