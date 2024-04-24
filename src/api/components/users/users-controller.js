@@ -11,16 +11,42 @@ const User = require('../../../models/index').User;
  */
 async function getUsers(request, response, next) {
   try {
-    const users = await usersService.getUsers();
     const pageNumber = parseInt(request.query.page_number) || 1;
-    const pageSize = parseInt(request.query.page_size) || 3; 
+    const pageSize = parseInt(request.query.page_size) || 5; 
+    const search = request.query.search;
+    const sort = request.query.sort;
+
+    let searchField = '';
+    let searchV = '';
+
+    if(search && search.includes(':')){
+      const [field, value] = search.split(':');
+      searchField = field;
+      searchV = value;
+    }
+
+    let sortField = '';
+    let sortDef = 'asc';
+
+    if(sort === 'email:desc') {
+      sortField = 'email';
+      sortDef = 'desc';
+    } else if(sort === 'id:desc') {
+      sortField = 'id';
+      sortDef = 'desc';
+    } else if(sort === 'name:desc') {
+      sortField = 'name';
+      sortDef = 'desc';
+    }
+
     let totalItem;
+    const users = await usersService.getUsers(searchField, searchV, sortField, sortDef);
     
-    const user = users.splice((pageNumber-1)*pageSize, pageSize)
+    const user = users.splice((pageNumber-1) * pageSize, pageSize);
+
     User.find().countDocuments()
       .then(count => {
         totalItem = count;
-        
           User.find()
           .skip((parseInt(pageNumber) - 1) * parseInt(pageSize))
           .limit(parseInt(pageSize))
