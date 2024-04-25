@@ -33,6 +33,19 @@ async function checkLoginCredentials(email, password) {
   return null;
 }
 
+
+async function setLastFailLog(email, timestamp) {
+  // Implementasi untuk menyimpan log percobaan login terakhir
+  await authenticationRepository.setLastFailLog(email, timestamp);
+}
+
+async function resetFailedLoginAttempts(email) {
+  // Implementasi untuk mereset percobaan login yang gagal
+  await authenticationRepository.resetFailedLoginAttempts(email);
+}
+
 module.exports = {
   checkLoginCredentials,
+  setLastFailLog,
+  resetFailedLoginAttempts,
 };

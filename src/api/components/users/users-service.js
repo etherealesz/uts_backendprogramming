@@ -20,13 +20,13 @@ async function getUsers(
       );
       break;
     case 'name':
-      users = users.filter((user) => user.name.toLowerCase().includes(searchV));
+      users = users.filter((user) => 
+      user.name.toLowerCase().includes(searchV));
       break;
   }
 
   switch (sortField) {
     case 'email':
-      // users = await usersRepository.sortByEmail();
       if (sortOrder === 'desc') {
         users = users.sort((a, b) => a.email.localeCompare(b.email)).reverse();
       } else {

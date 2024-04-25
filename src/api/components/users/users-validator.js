@@ -2,11 +2,13 @@ const joi = require('joi');
 const { joiPasswordExtendCore } = require('joi-password');
 const joiPassword = joi.extend(joiPasswordExtendCore);
 
+// Disini ada yang saya ubah, yaitu di bagian email, saya tambahkan .lowercase(), karena
+// pada umumnya email itu case insensitive.
 module.exports = {
   createUser: {
     body: {
       name: joi.string().min(1).max(100).required().label('Name'),
-      email: joi.string().email().required().label('Email'),
+      email: joi.string().email().required().lowercase().label('Email'),
       password: joiPassword
         .string()
         .minOfSpecialCharacters(1)
