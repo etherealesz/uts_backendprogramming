@@ -7,7 +7,7 @@ let attempts = {};
 
 async function login(request, response, next) {
   const { email, password } = request.body;
-  const lock = 30 * 1000;
+  const lock = 5 * 1000;
 
   try {
     attempts[email] = attempts[email] || 0;
@@ -23,10 +23,11 @@ async function login(request, response, next) {
 
     if (!loginSuccess && attempts[email] < 5) {
       attempts[email]++;
-      console.log("[" + new Date().toISOString() + "] User " + email + " gagal login. Attempt = " + attempts[email]);
       loginSuccess = await authenticationServices.checkLoginCredentials(email, password);
 
-      if (!loginSuccess) {
+      if(loginSuccess) {
+        attempts[email] = 0;
+      } else {
         await authenticationServices.setLastFailLog(email, new Date().toISOString());
       }
     }
@@ -39,15 +40,29 @@ async function login(request, response, next) {
         'Too Many Login Attempts, your account will be opened on ' + new Date(lockTillConstant).toISOString(),
       );
     }
-
-    if(!loginSuccess){
-      const attemptsLeft = 5 - attempts[email];
-      return response.status(401).json({message: 'Invalid email or password', attemptsLeft: attemptsLeft})
+    else if(lockConstantSet && lockTillConstant <= Date.now()){
+      lockConstantSet = false;
+      lockTillConstant = null;
+      attempts[email] = 0;
     }
 
-    await authenticationServices.resetFailedLoginAttempts(email);
+    if(!loginSuccess && !lockTillConstant && attempts[email] < 5){
+      console.log("[" + new Date().toISOString() + "] User " + email + " gagal login. Attempt = " + attempts[email]);
+    }
+    
+    if(loginSuccess){
+      await authenticationServices.resetFailedLoginAttempts(email);
+      return response.status(200).json(loginSuccess);
+    } else {
+      if(lockConstantSet && lockTillConstant > Date.now()){
+        return response.status(403).json({message: 'Your account is locked. Please try again later at ', lockUntil: new Date(lockTillConstant).toISOString()})
+      } else if(attempts[email] < 5){
+        return response.status(401).json({message: 'Invalid email or password', attemptsLeft: (5 - attempts[email])});
+      } else {
+        return response.status(401).json({message: 'Your account is locked. Please try again later.', lockUntil: new Date(lockTillConstant).toISOString()});
+      }
+    }
 
-    return response.status(200).json(loginSuccess);
   } catch (error) {
     return next(error);
   }

@@ -16,12 +16,12 @@ async function getUsers(
   switch (searchField) {
     case 'email':
       users = users.filter((user) =>
-        user.email.toLowerCase().includes(searchV)
+        user.email.toLowerCase().includes(searchV.toLowerCase())
       );
       break;
     case 'name':
       users = users.filter((user) => 
-      user.name.toLowerCase().includes(searchV));
+      user.name.toLowerCase().includes(searchV.toLowerCase()));
       break;
   }
 
