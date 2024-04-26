@@ -1,6 +1,5 @@
 const usersService = require('./users-service');
 const { errorResponder, errorTypes } = require('../../../core/errors');
-const User = require('../../../models/index').User;
 
 /**
  * Handle get list of users request
@@ -9,17 +8,18 @@ const User = require('../../../models/index').User;
  * @param {object} next - Express route middlewares
  * @returns {object} Response object or pass an error to the next route
  */
+
 async function getUsers(request, response, next) {
   try {
-    const pageNumber = parseInt(request.query.page_number) || 1;
-    const pageSize = parseInt(request.query.page_size) || 5; 
-    const search = request.query.search;
-    const sort = request.query.sort;
+    const { page_number, page_size, search, sort } = request.query;
+
+    const pageNumber = parseInt(page_number) || 1;
+    const pageSize = parseInt(page_size);
 
     let searchField = '';
     let searchV = '';
 
-    if(search && search.includes(':')){
+    if (search && search.includes(':')) {
       const [field, value] = search.split(':');
       searchField = field;
       searchV = value;
@@ -28,62 +28,45 @@ async function getUsers(request, response, next) {
     let sortField = '';
     let sortDef = 'asc';
 
-    if(sort === 'email:desc') {
+    if (sort === 'email:desc') {
       sortField = 'email';
       sortDef = 'desc';
-    } else if(sort === 'id:desc') {
+    } else if (sort === 'id:desc') {
       sortField = 'id';
       sortDef = 'desc';
-    } else if(sort === 'name:desc') {
+    } else if (sort === 'name:desc') {
       sortField = 'name';
       sortDef = 'desc';
-    } else if(sort === 'email:asc'){
+    } else if (sort === 'email:asc') {
       sortField = 'email';
       sortDef = 'asc';
-    } else if(sort === 'id:asc'){
+    } else if (sort === 'id:asc') {
       sortField = 'id';
       sortDef = 'asc';
-    } else if(sort === 'name:asc'){
+    } else if (sort === 'name:asc') {
       sortField = 'name';
       sortDef = 'asc';
     }
 
-    let totalItem;
-    let hasPrevious;
-    let hasNext;
-    let totalPages;
+    const result = await usersService.getUsers(
+      pageNumber,
+      pageSize,
+      searchField,
+      searchV,
+      sortField,
+      sortDef
+    );
 
-    const users = await usersService.getUsers(searchField, searchV, sortField, sortDef);
-    
-    const user = users.splice((pageNumber-1) * pageSize, pageSize);
-
-    User.find().countDocuments().then(count => {
-        totalItem = count;
-        hasPrevious = pageNumber > 1;
-        hasNext = pageNumber < totalPages;
-        totalPages = Math.ceil(totalItem/pageSize);
-
-          User.find()
-          .skip((parseInt(pageNumber) - 1) * parseInt(pageSize))
-          .limit(parseInt(pageSize))
-
-      }).then(result => {
-        response.status(200).json({
-          data: result,
-          totalData: totalItem,
-          total_pages: totalPages,
-          has_previous_page: hasPrevious,
-          has_next_page: hasNext,
-          page_number: parseInt(pageNumber),
-          page_size: parseInt(pageSize),
-          user
-        });
-      });
-
+    response.status(200).json(result);
   } catch (error) {
     return next(error);
   }
 }
+
+module.exports = {
+  getUsers,
+};
+
 
 /**
  * Handle get user detail request
