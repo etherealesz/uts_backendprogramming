@@ -57,6 +57,12 @@ async function getUsers(request, response, next) {
       sortDef
     );
 
+    if(pageNumber <= 0 || pageSize <= 0)
+    throw errorResponder(
+      errorTypes.FORBIDDEN,
+      'Page cannot be less than 0!',
+    );
+
     response.status(200).json(result);
   } catch (error) {
     return next(error);
