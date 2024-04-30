@@ -26,4 +26,7 @@ function decodeToken(token) {
 }
 
 
-module.exports = { verifyToken, decodeToken };
+module.exports = { 
+verifyToken, 
+decodeToken 
+};

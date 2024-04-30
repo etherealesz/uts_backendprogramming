@@ -18,6 +18,6 @@ const bankAccountSchema = new mongoose.Schema({
 });
 
 
-module.exports = {
-  bankAccountSchema,
-};
+const BankAccount = mongoose.model('BankAccount', bankAccountSchema);
+
+module.exports = BankAccount;

@@ -45,6 +45,10 @@ app.use((request, response, next) =>
   next(errorResponder(errorTypes.ROUTE_NOT_FOUND, 'Route not found'))
 );
 
+app.use((request, response, next) =>
+  next(errorResponder(errorTypes.INVALID_PASSWORD, 'Invalid Password'))
+);
+
 // Error loggers
 app.use((error, request, response, next) => {
   const ctx = {
