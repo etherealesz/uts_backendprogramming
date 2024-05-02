@@ -6,87 +6,59 @@ async function getUserByEmail(email) {
   return User.findOne({ email });
 }
 
-async function createBankAccount(userId, accountNumber){
-  return new BankAccount({userId: userId, accountNumber: accountNumber}).save();
+async function createBankAccount(userId, accountNumber) {
+  return new BankAccount({ userId: userId, accountNumber: accountNumber }).save();
 }
 
-async function getBankAccountNumberAndUserId(accountNumber, userId){
+async function getBankAccountNumberAndUserId(accountNumber, userId) {
   return await BankAccount.findOne({ accountNumber: accountNumber, userId: userId });
 }
 
-async function getBankAccountByUserId(userId){
-  return await BankAccount.find({userId: userId});
+async function getBankAccountByUserId(userId) {
+  return await BankAccount.find({ userId: userId });
 }
 
-async function getTransactionHistory(accountId){
-  return await Transaction.find({accountId: accountId});
+async function getTransactionHistory(accountId) {
+  return await Transaction.find({ accountId: accountId });
 }
 
 async function findByAccountNumber(accountNumber, userId) {
-  const bankAccount = await BankAccount.findOne({ accountNumber: accountNumber, userId: userId });
-  return bankAccount;
+  return await BankAccount.findOne({ accountNumber: accountNumber, userId: userId });
 }
 
-async function topUp(accountId, amount) {
+async function topUp(bankAccount, amount) {
   try {
-      // Temukan akun bank berdasarkan accountId
-      const bankAccount = await BankAccount.findById(accountId);
-      if (!bankAccount) {
-          throw new Error('Akun bank tidak ditemukan');
-      }
-      bankAccount.balance += amount;
-      console.log('success top up');
-
-      await bankAccount.save();
-      const topUpTransaction = new Transaction({
-          accountId: accountId,
-          type: 'topup',
-          amount: amount
-      });
-      const newTransaction = await topUpTransaction.save();
-      return newTransaction;
+    await bankAccount.save();
+    return await new Transaction({
+      accountId: bankAccount._id,
+      type: 'topup',
+      amount: amount
+    }).save();
   } catch (error) {
-      throw new Error('Gagal menambahkan transaksi top up: ' + error.message);
+    throw new Error('Gagal menambahkan transaksi top up: ' + error.message);
   }
 }
 
-async function withdraw(accountNumber, amount) {
+async function withdraw(bankAccount, amount) {
   try {
-      const bankAccount = await BankAccount.findOne({ accountNumber: accountNumber });
-      if (!bankAccount) {
-          throw new Error('Akun bank tidak ditemukan');
-      }
-
-      if (bankAccount.balance < amount) {
-          throw new Error('Saldo tidak mencukupi untuk melakukan penarikan');
-      }
-
-      bankAccount.balance -= amount;
-      console.log('success withdraw');
-
-      await bankAccount.save();
-
-      const withdrawTransaction = new Transaction({
-          accountId: bankAccount._id,
-          type: 'withdraw',
-          amount: amount
-      });
-      const newTransaction = await withdrawTransaction.save();
-      return newTransaction;
+    await bankAccount.save();
+    return await Transaction({
+      accountId: bankAccount._id,
+      type: 'withdraw',
+      amount: amount
+    }).save();
   } catch (error) {
-      throw new Error('Gagal menambahkan transaksi penarikan: ' + error.message);
+    throw new Error('Gagal menambahkan transaksi penarikan: ' + error.message);
   }
 }
 
 async function transfer(bankAccount, amount) {
   await bankAccount.save();
-  const withdrawTransaction = new Transaction({
-      accountId: bankAccount._id,
-      type: 'transfer',
-      amount: amount
-  });
-  const newTransaction = await withdrawTransaction.save();
-  return newTransaction;
+  return new Transaction({
+    accountId: bankAccount._id,
+    type: 'transfer',
+    amount: amount
+  }).save();
 }
 
 

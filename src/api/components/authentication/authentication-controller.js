@@ -18,11 +18,11 @@ async function login(request, response, next) {
         errorTypes.FORBIDDEN,
         'Your account is locked. Please try again later.' + formatLock
       );
+    } else if (lockTill != null && attempts[email] == 0) {
+      console.log("[" + moment().format('YYYY-MM-DD HH:mm:ss.SSS Z') + "] User " + email + "Bisa mencoba login kembali karena sudah lebih dari 30 menit sejakpengenaan limit. Attempt di-reset kembali ke " + attempts[email]);
     }
-
     // 2. Memeriksa keberhasilan login
     let loginSuccess = await authenticationServices.checkLoginCredentials(email, password);
-
     if (loginSuccess) {
       attempts[email] = 0;
       await authenticationServices.resetFailedLoginAttempts(email);
@@ -34,12 +34,19 @@ async function login(request, response, next) {
     if (attempts[email] < 5) {
       attempts[email]++;
       await authenticationServices.setLastFailLog(email, moment().format('YYYY-MM-DD HH:mm:ss.SSS Z'));
-      console.log("[" + moment().format('YYYY-MM-DD HH:mm:ss.SSS Z') + "] User " + email + " gagal login. Attempt = " + attempts[email]);
+      if (attempts[email] >= 5) {
+        console.log("[" + moment().format('YYYY-MM-DD HH:mm:ss.SSS Z') + "] User " + email + " gagal login. Attempt = " + attempts[email] + ". Limit reached");
+      } else {
+        console.log("[" + moment().format('YYYY-MM-DD HH:mm:ss.SSS Z') + "] User " + email + " gagal login. Attempt = " + attempts[email]);
+      }
       return response.status(401).json({ message: 'Invalid email or password', attemptsLeft: (5 - attempts[email]) });
     }
 
-    attempts[email] = 0;
-    console.log("[" + moment().format('YYYY-MM-DD HH:mm:ss.SSS Z') + "] User " + email + " bisa mencoba login kembali karena sudah lebih dari 30 menit sejak penanganan limit, Attempt di reset kembali ke 0");
+    console.log("[" + moment().format('YYYY-MM-DD HH:mm:ss.SSS Z') + "] User " + email + "Mencoba login,namun mendapatkan error 403 karena telah melebihi limit attemptnya");
+
+    if (lockTill && lockTill < moment().format('YYYY-MM-DD HH:mm:ss.SSS Z')) {
+      attempts[email] = 0
+    }
     // 4. Memeriksa apakah mencapai batas percobaan gagal
     lockTill = moment().add(5, 'seconds').format('YYYY-MM-DD HH:mm:ss');
     throw errorResponder(
