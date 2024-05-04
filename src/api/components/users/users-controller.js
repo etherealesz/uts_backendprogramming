@@ -11,10 +11,17 @@ const { errorResponder, errorTypes } = require('../../../core/errors');
 
 async function getUsers(request, response, next) {
   try {
-    const { page_number, page_size, search, sort } = request.query;
+    const { page_number = 1, page_size, search, sort } = request.query;
 
-    const pageNumber = parseInt(page_number) || 1;
+    const pageNumber = parseInt(page_number);
     const pageSize = parseInt(page_size);
+
+    if (pageNumber <= 0 || pageSize <= 0) {
+      throw errorResponder(
+        errorTypes.FORBIDDEN,
+        'Page number and page size must be greater than 0!',
+      );
+    }
 
     let searchField = '';
     let searchV = '';
@@ -25,28 +32,16 @@ async function getUsers(request, response, next) {
       searchV = value;
     }
 
-    let sortField = '';
-    let sortDef = 'asc';
+    const sortFields = {
+      'email:desc': ['email', 'desc'],
+      'id:desc': ['id', 'desc'],
+      'name:desc': ['name', 'desc'],
+      'email:asc': ['email', 'asc'],
+      'id:asc': ['id', 'asc'],
+      'name:asc': ['name', 'asc'],
+    };
 
-    if (sort === 'email:desc') {
-      sortField = 'email';
-      sortDef = 'desc';
-    } else if (sort === 'id:desc') {
-      sortField = 'id';
-      sortDef = 'desc';
-    } else if (sort === 'name:desc') {
-      sortField = 'name';
-      sortDef = 'desc';
-    } else if (sort === 'email:asc') {
-      sortField = 'email';
-      sortDef = 'asc';
-    } else if (sort === 'id:asc') {
-      sortField = 'id';
-      sortDef = 'asc';
-    } else if (sort === 'name:asc') {
-      sortField = 'name';
-      sortDef = 'asc';
-    }
+    const [sortField, sortDef] = sortFields[sort] || [];
 
     const result = await usersService.getUsers(
       pageNumber,
@@ -57,22 +52,11 @@ async function getUsers(request, response, next) {
       sortDef
     );
 
-    if(pageNumber <= 0 || pageSize <= 0)
-    throw errorResponder(
-      errorTypes.FORBIDDEN,
-      'Page cannot be less than 0!',
-    );
-
     response.status(200).json(result);
   } catch (error) {
     return next(error);
   }
 }
-
-module.exports = {
-  getUsers,
-};
-
 
 /**
  * Handle get user detail request

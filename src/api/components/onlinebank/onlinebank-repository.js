@@ -1,6 +1,6 @@
 const { Transaction } = require('../../../models');
 const { User } = require('../../../models');
-const BankAccount = require('../../../models/bank-account');
+const { BankAccount } = require('../../../models');
 
 async function getUserByEmail(email) {
   return User.findOne({ email });

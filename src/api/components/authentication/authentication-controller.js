@@ -19,8 +19,9 @@ async function login(request, response, next) {
         'Your account is locked. Please try again later.' + formatLock
       );
     } else if (lockTill != null && attempts[email] == 0) {
-      console.log("[" + moment().format('YYYY-MM-DD HH:mm:ss.SSS Z') + "] User " + email + "Bisa mencoba login kembali karena sudah lebih dari 30 menit sejakpengenaan limit. Attempt di-reset kembali ke " + attempts[email]);
+      console.log("[" + moment().format('YYYY-MM-DD HH:mm:ss.SSS Z') + "] User " + email + "Bisa mencoba login kembali karena sudah lebih dari 30 menit sejak pengenaan limit. Attempt di-reset kembali ke " + attempts[email]);
     }
+
     // 2. Memeriksa keberhasilan login
     let loginSuccess = await authenticationServices.checkLoginCredentials(email, password);
     if (loginSuccess) {
@@ -42,13 +43,14 @@ async function login(request, response, next) {
       return response.status(401).json({ message: 'Invalid email or password', attemptsLeft: (5 - attempts[email]) });
     }
 
-    console.log("[" + moment().format('YYYY-MM-DD HH:mm:ss.SSS Z') + "] User " + email + "Mencoba login,namun mendapatkan error 403 karena telah melebihi limit attemptnya");
+    console.log("[" + moment().format('YYYY-MM-DD HH:mm:ss.SSS Z') + "] User " + email + " mencoba login, namun mendapatkan error 403 karena telah melebihi limit attemptnya");
 
     if (lockTill && lockTill < moment().format('YYYY-MM-DD HH:mm:ss.SSS Z')) {
       attempts[email] = 0
     }
+
     // 4. Memeriksa apakah mencapai batas percobaan gagal
-    lockTill = moment().add(5, 'seconds').format('YYYY-MM-DD HH:mm:ss');
+    lockTill = moment().add(10, 'seconds').format('YYYY-MM-DD HH:mm:ss');
     throw errorResponder(
       errorTypes.FORBIDDEN,
       'Too Many Login Attempts, your account will be opened on ' + lockTill,

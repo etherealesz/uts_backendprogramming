@@ -9,64 +9,44 @@
     pageNumber = 1,
     pageSize,
     searchField = '',
-    searchV = '',
+    searchValue = '',
     sortField = '',
     sortOrder = 'asc'
   ) {
     let users = await usersRepository.getUsers();
-    if(searchField && searchV){    
-      switch (searchField) {
-      case 'email':
-        users = users.filter((user) =>
-          user.email.toLowerCase().includes(searchV.toLowerCase())
-        );
-        break;
-      case 'name':
-        users = users.filter((user) => 
-        user.name.toLowerCase().includes(searchV.toLowerCase()));
-        break;
+  
+    // Filtering
+    if (searchField && searchValue) {
+      users = users.filter(user => {
+        const field = user[searchField]?.toLowerCase(); // optional chaining
+        return field && field.includes(searchValue.toLowerCase());
+      });
     }
-    }
+  
+    // Sorting
     if (sortField && sortOrder) {
-    switch (sortField) {
-      case 'email':
-        if (sortOrder === 'desc') {
-          users = users.sort((a, b) => a.email.localeCompare(b.email)).reverse();
-        } else {
-          users = users.sort((a, b) => a.email.localeCompare(b.email));
-        }
-        break;
-      case 'id':
-        if (sortOrder === 'desc') {
-          users = users.sort((a, b) => a.id.localeCompare(b.id)).reverse();
-        } else {
-          users = users.sort((a, b) => a.id.localeCompare(b.id));
-        }
-        break;
-      case 'name':
-        if (sortOrder === 'desc') {
-          users = users.sort((a, b) => a.name.localeCompare(b.name)).reverse();
-        } else {
-          users = users.sort((a, b) => a.name.localeCompare(b.name));
-        }
-        break;
+      const sortFn = (a, b) => {
+        const fieldA = a[sortField];
+        const fieldB = b[sortField];
+        return sortOrder === 'asc' ? fieldA.localeCompare(fieldB) : fieldB.localeCompare(fieldA);
+      };
+      users.sort(sortFn);
     }
-    }
-
+  
+    // Pagination
     const totalItems = users.length;
     const totalPages = pageSize ? Math.ceil(totalItems / pageSize) : 1;
     const startIndex = (pageNumber - 1) * (pageSize || totalItems);
     const endIndex = Math.min(startIndex + (pageSize || totalItems), totalItems);
-
-
     const paginatedUsers = users.slice(startIndex, endIndex);
-
+  
+    // Mapping data
     const results = paginatedUsers.map(user => ({
       id: user.id,
       name: user.name,
       email: user.email,
     }));
-
+  
     return {
       page_number: pageNumber,
       page_size: pageSize || totalItems,
@@ -77,7 +57,6 @@
       data: results,
     };
   }
-
   /**
    * Get user detail
    * @param {string} id - User ID

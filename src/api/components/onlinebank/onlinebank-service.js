@@ -1,7 +1,6 @@
 const bankAccountRepository = require('./onlinebank-repository');
 const { errorResponder, errorTypes } = require('../../../core/errors');
 const BankAccount = require('../../../models/bank-account');
-const { getUserByEmail } = require('../authentication/authentication-repository');
 
 async function createBankAccount(userId, accountNumber) {
     try {
@@ -94,7 +93,7 @@ async function withdraw(accountNumber, userId, total) {
         if (bankAccounts.balance < total) {
             throw errorResponder(
                 errorTypes.NOT_FOUND,
-                "Ops, balance not enough"
+                "Oops, balance not enough"
             );
         }
 
