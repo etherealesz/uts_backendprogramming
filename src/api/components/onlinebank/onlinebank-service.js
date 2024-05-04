@@ -1,16 +1,17 @@
 const bankAccountRepository = require('./onlinebank-repository');
 const { errorResponder, errorTypes } = require('../../../core/errors');
-const BankAccount = require('../../../models/bank-account');
+const { getUserByEmail } = require('../authentication/authentication-repository');
 
 async function createBankAccount(userId, accountNumber) {
     try {
-        const existingBankAccount = await BankAccount.findOne({ accountNumber: accountNumber });
+
+        var existingBankAccount = await bankAccountRepository.findByAccountNumber(accountNumber, userId);
         if (existingBankAccount) {
             throw new Error('Nomor rekening sudah digunakan sebelumnya.')
         }
         return await bankAccountRepository.createBankAccount(userId, accountNumber)
-    } catch {
-        throw new Error('Nomor rekening sudah digunakan sebelumnya.')
+    } catch (error) {
+        throw new Error(error.message)
     }
 }
 
@@ -21,7 +22,8 @@ async function getBankAccountByUserId(userId) {
     }
     catch (error) {
         throw errorResponder(
-            errorTypes.BAD_REQUEST, 'Bad request'
+            errorTypes.BAD_REQUEST, 'Bad request',
+            error.message
         )
     }
 }
@@ -39,8 +41,9 @@ async function getTransactionHistory(accountNumber, userId) {
     }
 }
 
-async function getBankAccountByAccountNumber() {
-    const bankAccounts = await bankAccountRepository.getByAccountNumberAndUserId(accountNumber, userId);
+async function getBankAccountByAccountNumber(accountNumber, userId) {
+
+    const bankAccounts = await bankAccountRepository.getBankAccountNumberAndUserId(accountNumber, userId);
     if (bankAccounts) {
         return bankAccounts;
     } else {
@@ -93,7 +96,7 @@ async function withdraw(accountNumber, userId, total) {
         if (bankAccounts.balance < total) {
             throw errorResponder(
                 errorTypes.NOT_FOUND,
-                "Oops, balance not enough"
+                "Ops, balance not enough"
             );
         }
 
