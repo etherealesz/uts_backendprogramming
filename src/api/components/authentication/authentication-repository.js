@@ -9,13 +9,22 @@ async function getUserByEmail(email) {
   return User.findOne({ email });
 }
 
+/**
+ * Sets user failed login time
+ * @param {string} email - Email
+ * @param {string} timestamp - Timestamp
+ * @returns {Promise}
+ */
 async function setLastFailLog(email, timestamp) {
-  // Misalnya, menyimpan data log percobaan login terakhir dalam model user
   await User.updateOne({ email: email }, { lastFailLog: timestamp });
 }
 
+/**
+ * Resets user failed login attempt
+ * @param {string} email - Email
+ * @returns {Promise}
+ */
 async function resetFailedLoginAttempts(email) {
-  // Misalnya, mereset jumlah percobaan login yang gagal ke 0 dalam model user
   await User.updateOne({ email: email }, { failedLoginAttempts: 0 });
 }
 

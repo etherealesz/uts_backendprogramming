@@ -1,11 +1,16 @@
 const bankAccountRepository = require('./onlinebank-repository');
 const { errorResponder, errorTypes } = require('../../../core/errors');
-const { getUserByEmail } = require('../authentication/authentication-repository');
 
+
+  /**
+   * Create new bank account number
+   * @param {string} userId - User Id yang terhubung dengan id dari bank
+   * @param {string} accountNumber - Account Number
+   * @returns {Object}
+   */
 async function createBankAccount(userId, accountNumber) {
     try {
-
-        var existingBankAccount = await bankAccountRepository.findByAccountNumber(accountNumber, userId);
+        var existingBankAccount = await bankAccountRepository.getBankAccountNumber(accountNumber);
         if (existingBankAccount) {
             throw new Error('Nomor rekening sudah digunakan sebelumnya.')
         }
@@ -15,6 +20,12 @@ async function createBankAccount(userId, accountNumber) {
     }
 }
 
+
+  /**
+   * Gets all list of bank account by user id
+   * @param {string} userId - User Id yang terhubung dengan id dari bank
+   * @returns {Object}
+   */
 async function getBankAccountByUserId(userId) {
     try {
         const bankAccounts = await bankAccountRepository.getBankAccountByUserId(userId);
@@ -28,6 +39,13 @@ async function getBankAccountByUserId(userId) {
     }
 }
 
+
+  /**
+   * Gets all list of transaction history by account number
+   * @param {string} accountNumber - Account Number
+   * @param {string} userId - User Id (Connected to the bank)
+   * @returns {Object}
+   */
 async function getTransactionHistory(accountNumber, userId) {
     try {
         var bankAccount = await bankAccountRepository.getBankAccountNumberAndUserId(accountNumber, userId);
@@ -61,14 +79,14 @@ async function withdraw(accountNumber, userId, total) {
         if (!bankAccounts) {
             throw errorResponder(
                 errorTypes.NOT_FOUND,
-                "Bank account not found!"
+                "Bank account not found / The account you wanted to withdraw from is not your account!"
             );
         }
 
         if (bankAccounts.balance < total) {
             throw errorResponder(
                 errorTypes.BAD_REQUEST,
-                "balance is not enough"
+                "Balance is not enough"
             );
         }
         // update balance in bank account
@@ -83,38 +101,10 @@ async function withdraw(accountNumber, userId, total) {
     }
 }
 
-async function withdraw(accountNumber, userId, total) {
-    try {
-        const bankAccounts = await bankAccountRepository.getBankAccountNumberAndUserId(accountNumber, userId);
-        if (!bankAccounts) {
-            throw errorResponder(
-                errorTypes.NOT_FOUND,
-                "Bank account is not found!"
-            );
-        }
-
-        if (bankAccounts.balance < total) {
-            throw errorResponder(
-                errorTypes.NOT_FOUND,
-                "Ops, balance not enough"
-            );
-        }
-
-        bankAccounts.balance -= total;
-
-        let responseTransactions = await bankAccountRepository.withdraw(bankAccounts, total);
-        return responseTransactions;
-    } catch (error) {
-        throw errorResponder(
-            errorTypes.BAD_REQUEST,
-            error.message
-        );
-    }
-}
 
 async function transfer(accountNumber, accountNumberDestination, userId, total, email) {
     try {
-        const user = await getUserByEmail(email);
+        const user = await bankAccountRepository.getUserByEmail(email);
         if (!user) {
             throw errorResponder(
                 errorTypes.NOT_FOUND,
@@ -176,12 +166,12 @@ async function transfer(accountNumber, accountNumberDestination, userId, total, 
     }
 }
 
-async function topUp(accountNumber, userId, amount) {
+async function deposit(accountNumber, userId, amount) {
     var bankAccount = await bankAccountRepository.findByAccountNumber(accountNumber, userId);
     if (!bankAccount) {
         throw errorResponder(
             errorTypes.NOT_FOUND,
-            "Bank account not found"
+            "Bank account not found / The account you wanted to topup for is not your account!"
         );
     }
     bankAccount.balance += amount;
@@ -189,6 +179,7 @@ async function topUp(accountNumber, userId, amount) {
 }
 
 async function updateAccountNumber(accountNumber, newAccountNumber, userId) {
+    
     let bankAccount = await bankAccountRepository.findByAccountNumber(accountNumber, userId);
     if (!bankAccount) {
         throw errorResponder(
@@ -196,12 +187,18 @@ async function updateAccountNumber(accountNumber, newAccountNumber, userId) {
             "Bank account not found"
         );
     }
+
+    var existingBankAccount = await bankAccountRepository.getBankAccountNumber(newAccountNumber);
+    if (existingBankAccount) {
+        throw new Error('Nomor rekening sudah digunakan sebelumnya.')
+    }
+
     bankAccount.accountNumber = newAccountNumber;
     return await bankAccountRepository.update(bankAccount);
 }
 
-async function deleteAccountNumber(account_number, userId) {
-    let bankAccount = await bankAccountRepository.findByAccountNumber(account_number, userId);
+async function deleteAccountNumber(accountNumber, userId) {
+    let bankAccount = await bankAccountRepository.findByAccountNumber(accountNumber, userId);
     if (!bankAccount) {
         throw errorResponder(
             errorTypes.NOT_FOUND,
@@ -217,7 +214,7 @@ module.exports = {
     getBankAccountByAccountNumber,
     getTransactionHistory,
     withdraw,
-    topUp,
+    deposit,
     transfer,
     updateAccountNumber,
     deleteAccountNumber,

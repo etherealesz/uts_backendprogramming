@@ -1,7 +1,7 @@
 // bank-account-model.js
-const mongoose = require('mongoose');
+const { default: mongoose } = require("mongoose");
 
-const bankAccountSchema = new mongoose.Schema({
+const bankAccountSchema = {
     userId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'users',
@@ -15,6 +15,6 @@ const bankAccountSchema = new mongoose.Schema({
         type: Number,
         default: 0
     }
-});
+};
 
 module.exports = bankAccountSchema;

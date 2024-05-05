@@ -6,7 +6,7 @@ module.exports = {
             account_number: Joi.string().required().label('Nomor Rekening'), // Mengubah label dari 'Email' menjadi 'Nomor Akun'
         },
     },
-    top_up: {
+    deposit: {
         body: {
             account_number: Joi.string().required().label('Nomor Rekening'), // Mengubah label dari 'Email' menjadi 'Nomor Akun'
             total: Joi.number().required().label('Total'), // Mengubah label dari 'Email' menjadi 'Nomor Akun'

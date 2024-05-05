@@ -9,7 +9,7 @@ function verifyToken(req, res, next) {
     }
 
 
-    if (!token.startsWith('jwt')) {
+    if (!token.toLowerCase().startsWith('jwt')) {
         return res.status(401).json({ message: 'token must start with jwt' });
     }
 
