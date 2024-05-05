@@ -5,21 +5,13 @@ const moment = require('moment');
 async function login(request, response, next) {
   const { email, password } = request.body;
   try {
-    let lockTill = await authenticationServices.getLockTill();
-    if (lockTill && moment(lockTill) > moment()) {
-      console.log("[" + moment().format('YYYY-MM-DD HH:mm:ss') + "] User " + email + " mencoba login, namun mendapat error 403 karena telah melebihi limit attempt.");
-      throw errorResponder(
-        errorTypes.FORBIDDEN,
-        'Too Many Login Attempts, your account will be opened ons ' + lockTill,
-      )
+    let loginSuccess = await authenticationServices.checkLoginCredentials(email, password);
+    if (loginSuccess) {
+      await authenticationServices.handleSuccessfulLogin(email);
+      console.log("[" + moment().format('YYYY-MM-DD HH:mm:ss.SSS Z') + "] User " + email + " berhasil login.");
+      return response.status(200).json(loginSuccess);
     } else {
-      let loginSuccess = await authenticationServices.checkLoginCredentials(email, password);
-      if (loginSuccess) {
-        await authenticationServices.handleSuccessfulLogin(email);
-        console.log("[" + moment().format('YYYY-MM-DD HH:mm:ss') + "] User " + email + " berhasil login.");
-        return response.status(200).json(loginSuccess);
-      } else {
-        const attemptsLeft = await authenticationServices.handleFailedLogin(email);
+      const attemptsLeft = await authenticationServices.handleFailedLogin(email);
 
       if (attemptsLeft <= 5) {
         if (attemptsLeft >= 5) {
