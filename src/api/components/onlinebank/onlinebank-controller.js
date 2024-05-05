@@ -314,10 +314,11 @@ async function updateAccNumber(request, response, next) {
       accountNumber,
       userId
     );
-    // penagnanan ketika account bank tidak
+    // Handles if bank account is not found / null
     if (bankAccount == null) {
       throw errorResponder(errorTypes.NOT_FOUND, 'Bank account not found');
     }
+    // Handles if bank account (account number) has been used before
     if (bankAccount == false) {
       throw errorResponder(
         errorTypes.BAD_REQUEST,
