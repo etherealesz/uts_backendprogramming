@@ -113,6 +113,7 @@ async function deposit(accountNumber, userId, amount) {
 }
 
 async function updateAccountNumber(accountNumber, newAccountNumber, userId) {
+    
     let bankAccount = await bankAccountRepository.findByAccountNumber(accountNumber, userId);
     if (!bankAccount) {
         return null;
@@ -121,6 +122,12 @@ async function updateAccountNumber(accountNumber, newAccountNumber, userId) {
     if (existingBankAccount) {
         return false;
     }
+
+    var existingBankAccount = await bankAccountRepository.getBankAccountNumber(newAccountNumber);
+    if (existingBankAccount) {
+        throw new Error('Nomor rekening sudah digunakan sebelumnya.')
+    }
+
     bankAccount.accountNumber = newAccountNumber;
     return await bankAccountRepository.update(bankAccount);
 }

@@ -49,7 +49,7 @@ async function handleFailedLogin(email) {
 
   // Apabila attempts lebih dari sama dengan 5 dan belom diberikan timer, maka diberikan timer
   if (attempts[email] >= 5 && !lockTill) {
-    lockTill = moment().add(5, 'seconds').format('YYYY-MM-DD HH:mm:ss');
+    lockTill = moment().add(30, 'minutes').format('YYYY-MM-DD HH:mm:ss');
   }
 
   // Apabila attempts lebih kecil daripada 5, maka akan dicatat kapan terakhir kali gagal.

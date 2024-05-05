@@ -270,6 +270,30 @@ async function updateAccNumber(request, response, next) {
     }
 }
 
+/**
+ * Handle change user's bank account number request
+ * @param {object} request - Express request object
+ * @param {object} response - Express response object
+ * @param {object} next - Express route middlewares
+ * @returns {object} Response object or pass an error to the next route
+ */
+  async function updateAccNumber(request, response, next) {
+    const userId = request.userId;
+    const accountNumber = request.body.account_number;
+    const accountNumberOld = request.params.oldAccountNumber;
+
+    try {
+        var bankAccount = await onlineBankService.updateAccountNumber(accountNumberOld, accountNumber, userId);
+        return response.json({
+            code: 200,
+            message: `Succesfully update account number`,
+            data: bankAccount
+        });
+    } catch (error) {
+        return next(error);
+    }
+}
+
 module.exports = {
     create,
     getBankAccountByUserId,
