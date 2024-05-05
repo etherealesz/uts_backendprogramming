@@ -40,21 +40,24 @@ async function checkLoginCredentials(email, password) {
 /**
  * Handle failed login.
  * @param {string} email - Email
- * @returns {object} An object containing information about the login attempts, including the number of attempts and 
+ * @returns {object} An object containing information about the login attempts, including the number of attempts and
  * any potential lockout status.
  */
 async function handleFailedLogin(email) {
   attempts[email] = attempts[email] || 0;
   attempts[email]++;
 
-  // Apabila attempts lebih dari sama dengan 5 dan belom diberikan timer, maka diberikan timer
+  // If attempts is more / equal than 5 and haven't been given timer, then it will be given timer
   if (attempts[email] >= 5 && !lockTill) {
-    lockTill = moment().add(30, 'minutes').format('YYYY-MM-DD HH:mm:ss');
+    lockTill = moment().add(10, 'seconds').format('YYYY-MM-DD HH:mm:ss');
   }
 
-  // Apabila attempts lebih kecil daripada 5, maka akan dicatat kapan terakhir kali gagal.
+  // If attempts are less than 5, then it will count the time each time they fail.
   if (attempts[email] < 5) {
-    await authenticationRepository.setLastFailLog(email, moment().format('YYYY-MM-DD HH:mm:ss.SSS Z'))
+    await authenticationRepository.setLastFailLog(
+      email,
+      moment().format('YYYY-MM-DD HH:mm:ss.SSS Z')
+    );
   }
 
   return attempts[email];
@@ -73,7 +76,7 @@ async function resetLockTill(email) {
 /**
  * Handle failed login.
  * @param {string} email - Email
- * @returns {object} An object containing, among others, the JWT token if the email and password are matched. Otherwise returns null.
+ * @returns {object} An object about email
  */
 async function getAttempt(email) {
   return attempts[email];
@@ -82,7 +85,7 @@ async function getAttempt(email) {
 /**
  * Handle successfull login.
  * @param {string} email - Email
- * @returns {object} Object indicating the success of the login handling process. 
+ * @returns {Promise} Object indicating the success of the login handling process.
  */
 async function handleSuccessfulLogin(email) {
   attempts[email] = 0;
@@ -103,5 +106,5 @@ module.exports = {
   handleSuccessfulLogin,
   getLockTill,
   resetLockTill,
-  getAttempt
+  getAttempt,
 };

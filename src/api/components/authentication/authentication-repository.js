@@ -28,7 +28,6 @@ async function resetFailedLoginAttempts(email) {
   await User.updateOne({ email: email }, { failedLoginAttempts: 0 });
 }
 
-
 module.exports = {
   getUserByEmail,
   setLastFailLog,

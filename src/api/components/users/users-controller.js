@@ -12,30 +12,30 @@ async function getUsers(request, response, next) {
   try {
     const { page_number = 1, page_size, search, sort } = request.query;
 
-    // Disini menggunakan ternary, agar ketika kosong akan tetap mengeluarkan semua data.
+    // Ternary used, so when it's empty it will still return all the data.
     const pageNumber = page_number ? parseInt(page_number) : 1;
     const pageSize = page_size ? parseInt(page_size) : undefined;
 
-    // Apabila pageNumber dan pageSize adalah 0 ataupun dibawah 0, maka akan diberikan error.
+    // If the pageNumber dan pageSize is 0 or below 0, then it will return error.
     if (pageNumber <= 0 || pageSize <= 0) {
       throw errorResponder(
         errorTypes.FORBIDDEN,
-        'Page number and page size must be greater than 0!',
+        'Page number and page size must be greater than 0!'
       );
     }
 
-    // Untuk menyiapkan field, apabila kosong ataupun terisi
+    // To prepare for the field, whether it's empty or not
     let searchField = '';
     let searchV = '';
 
-    // Akan mengecek dengan .split(':') kemudian memasukkan sesuai dengan field dan value yang dimasukkan
+    // Will check the search / filter with .split(':') then inserts according to the field / value
     if (search && search.includes(':')) {
       const [field, value] = search.split(':');
       searchField = field;
       searchV = value;
     }
 
-    // Penyimpanan sorting fields
+    // Saves the sorting fields
     const sortFields = {
       'email:desc': ['email', 'desc'],
       'id:desc': ['id', 'desc'],
