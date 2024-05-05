@@ -5,26 +5,19 @@
    * Get list of users
    * @returns {Array}
    */
-  async function getUsers(
-    pageNumber = 1,
-    pageSize,
-    searchField = '',
-    searchValue = '',
-    sortField = '',
-    sortOrder = 'asc'
-  ) {
+  async function getUsers(pageNumber = 1, pageSize, searchField = '', searchValue = '', sortField = '', sortOrder = 'asc') {
     let users = await usersRepository.getUsers();
   
-    // Filtering
-    if (searchField && searchValue) {
+    // Pengerjaan filtering
+    if (!!searchField && !!searchValue) {
       users = users.filter(user => {
         const field = user[searchField]?.toLowerCase(); // optional chaining
-        return field && field.includes(searchValue.toLowerCase());
+        return !!field && field.includes(searchValue.toLowerCase());
       });
     }
   
-    // Sorting
-    if (sortField && sortOrder) {
+    // Pengerjaan sorting
+    if (!!sortField && !!sortOrder) {
       const sortFn = (a, b) => {
         const fieldA = a[sortField];
         const fieldB = b[sortField];
@@ -33,14 +26,16 @@
       users.sort(sortFn);
     }
   
-    // Pagination
+    // Total Items yang didapat dari total length users
     const totalItems = users.length;
+
+    // Pagination
     const totalPages = pageSize ? Math.ceil(totalItems / pageSize) : 1;
     const startIndex = (pageNumber - 1) * (pageSize || totalItems);
     const endIndex = Math.min(startIndex + (pageSize || totalItems), totalItems);
     const paginatedUsers = users.slice(startIndex, endIndex);
   
-    // Mapping data
+    // Mapping data menjadi data yang sudah terpaginated
     const results = paginatedUsers.map(user => ({
       id: user.id,
       name: user.name,
@@ -50,7 +45,7 @@
     return {
       page_number: pageNumber,
       page_size: pageSize || totalItems,
-      count: paginatedUsers.length,
+      count: totalItems,
       total_pages: totalPages,
       has_previous_page: pageNumber > 1,
       has_next_page: pageNumber < totalPages,

@@ -10,7 +10,7 @@ const route = express.Router();
 module.exports = (app) => {
     app.use('/online-bank', route);
 
-    // untuk mendaftarkan nomer rekening user 
+    // Creates bank account
     route.post(
         '/',
         verifyToken, // Middleware untuk memeriksa token
@@ -18,14 +18,14 @@ module.exports = (app) => {
         onlineBankController.create
     );
 
-    // ini untuk mendapatkan list dari nomer rekening user
+    // Get a list of bank account using user id
     route.get(
         '/',
         verifyToken, // Middleware untuk memeriksa token
         onlineBankController.getBankAccountByUserId
     );
 
-    // ini untuk mendapatkan data nomer rekening berdasarkan nomer rekening
+    // Get a list of 
     route.get(
         '/detail/:id',
         verifyToken, // Middleware untuk memeriksa token
@@ -38,15 +38,16 @@ module.exports = (app) => {
         verifyToken, // Middleware untuk memeriksa token
         onlineBankController.getTransactionHistory
     );
-    // ini untuk mengisi saldo dari bank
+
+    // ini untuk mengisi saldo di bank
     route.post(
-        '/top-up',
+        '/deposit',
         verifyToken, // Middleware untuk memeriksa token
-        celebrate(onlineBankValidator.top_up),
-        onlineBankController.topUp
+        celebrate(onlineBankValidator.deposit),
+        onlineBankController.deposit
     );
 
-    // menarik duit
+    // Route ini fungsinya untuk menarik uang
     route.post(
         '/withdraw',
         verifyToken, // Middleware untuk memeriksa token
@@ -55,7 +56,7 @@ module.exports = (app) => {
     );
 
 
-    // transfer
+    // Route ini fungsinya untuk mentransfer balance ke account lain
     route.post(
         '/transfer',
         verifyToken, // Middleware untuk memeriksa token
@@ -63,11 +64,12 @@ module.exports = (app) => {
         onlineBankController.transfer
     );
 
+    // Route akan mengedit angka
     route.put(
         '/edit/:oldAccountNumber',
         verifyToken, // Middleware untuk memeriksa token
         celebrate(onlineBankValidator.update),
-        onlineBankController.update
+        onlineBankController.updateAccNumber
     );
 
 

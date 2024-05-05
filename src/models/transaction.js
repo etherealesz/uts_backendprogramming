@@ -1,7 +1,7 @@
 // transaction-schema.js
-const mongoose = require('mongoose');
+const { default: mongoose } = require('mongoose');
 
-const transactionSchema = new mongoose.Schema({
+const transactionSchema = {
     accountId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'BankAccount',
@@ -9,7 +9,7 @@ const transactionSchema = new mongoose.Schema({
     },
     type: {
         type: String,
-        enum: ['transfer', 'topup', 'withdraw'],
+        enum: ['transfer', 'deposit', 'withdraw'],
         required: true
     },
     amount: {
@@ -20,6 +20,6 @@ const transactionSchema = new mongoose.Schema({
         type: Date,
         default: Date.now
     }
-});
+};
 
 module.exports = transactionSchema;

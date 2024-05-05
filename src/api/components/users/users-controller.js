@@ -8,14 +8,15 @@ const { errorResponder, errorTypes } = require('../../../core/errors');
  * @param {object} next - Express route middlewares
  * @returns {object} Response object or pass an error to the next route
  */
-
 async function getUsers(request, response, next) {
   try {
     const { page_number = 1, page_size, search, sort } = request.query;
 
-    const pageNumber = parseInt(page_number);
-    const pageSize = parseInt(page_size);
+    // Disini menggunakan ternary, agar ketika kosong akan tetap mengeluarkan semua data.
+    const pageNumber = page_number ? parseInt(page_number) : 1;
+    const pageSize = page_size ? parseInt(page_size) : undefined;
 
+    // Apabila pageNumber dan pageSize adalah 0 ataupun dibawah 0, maka akan diberikan error.
     if (pageNumber <= 0 || pageSize <= 0) {
       throw errorResponder(
         errorTypes.FORBIDDEN,
@@ -23,15 +24,18 @@ async function getUsers(request, response, next) {
       );
     }
 
+    // Untuk menyiapkan field, apabila kosong ataupun terisi
     let searchField = '';
     let searchV = '';
 
+    // Akan mengecek dengan .split(':') kemudian memasukkan sesuai dengan field dan value yang dimasukkan
     if (search && search.includes(':')) {
       const [field, value] = search.split(':');
       searchField = field;
       searchV = value;
     }
 
+    // Penyimpanan sorting fields
     const sortFields = {
       'email:desc': ['email', 'desc'],
       'id:desc': ['id', 'desc'],
@@ -41,8 +45,10 @@ async function getUsers(request, response, next) {
       'name:asc': ['name', 'asc'],
     };
 
+    // sortField atau sortDef sesuai dengan penyimpanan sortFields diatas, dan or apabila kosong
     const [sortField, sortDef] = sortFields[sort] || [];
 
+    // Result untuk menampilkan pagination
     const result = await usersService.getUsers(
       pageNumber,
       pageSize,

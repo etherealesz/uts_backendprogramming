@@ -1,17 +1,23 @@
 const { errorResponder, errorTypes } = require('../../../core/errors');
 const onlineBankService = require('./onlinebank-service');
 
+// Function ini adalah untuk create bank account baru
 async function create(request, response, next) {
     const userId = request.userId;
     const accountNumber = request.body.account_number;
-
     try {
-        var bankAccount = await onlineBankService.createBankAccount(userId, accountNumber);
-        return response.json({
-            code: 201,
-            message: "Succesfully added new bank account number",
-            data: bankAccount
-        });
+        const success = await onlineBankService.createBankAccount(userId, accountNumber);
+        if (success) {
+            return response.json({
+                code: 201,
+                message: "Successfully added new bank account number"
+            });
+        } else {
+            throw errorResponder(
+                errorTypes.BAD_REQUEST, 'Bad request',
+                "Gagal menambahkan account bank, account bank sudah digunakan"
+            )
+        }
     } catch (error) {
         return next(error);
     }
@@ -20,12 +26,11 @@ async function create(request, response, next) {
 
 async function getBankAccountByUserId(request, response, next) {
     const userId = request.userId;
-
     try {
         var bankAccount = await onlineBankService.getBankAccountByUserId(userId);
         return response.json({
             code: 200,
-            message: "Success get data bank account",
+            message: "Successfully get data bank account",
             data: bankAccount
         });
     } catch (error) {
@@ -42,7 +47,7 @@ async function getTransactionHistory(request, response, next) {
         var bankAccount = await onlineBankService.getTransactionHistory(accountId, userId);
         return response.json({
             code: 200,
-            message: "success get transaction history",
+            message: "Successfully get transaction history",
             data: bankAccount
         });
     } catch (error) {
@@ -51,15 +56,21 @@ async function getTransactionHistory(request, response, next) {
 }
 
 
-async function topUp(request, response, next) {
+async function deposit(request, response, next) {
     const userId = request.userId;
     const accountNumber = request.body.account_number;
     const total = request.body.total;
     try {
-        var bankAccount = await onlineBankService.topUp(accountNumber, userId, total);
+        var bankAccount = await onlineBankService.deposit(accountNumber, userId, total);
+        if (!bankAccount) {
+            throw errorResponder(
+                errorTypes.NOT_FOUND,
+                "Bank account not found / The account you wanted to topup for is not your account!"
+            );
+        }
         return response.json({
             code: 201,
-            message: "Succesfully topup new bank account number",
+            message: `Succesfully deposit money in bank account ${accountNumber}`,
             data: bankAccount
         });
     } catch (error) {
@@ -73,12 +84,31 @@ async function withdraw(request, response, next) {
     const accountNumber = request.body.account_number;
     const total = request.body.total;
     try {
-        var transactionHistory = await onlineBankService.withdraw(accountNumber, userId, total);
-        return response.json({
-            code: 200,
-            message: "Succesfully withdraw money",
-            data: transactionHistory
-        });
+
+        let bankAccount = await onlineBankService.getBankAccountNumberAndUserId(accountNumber, userId);
+        if (!bankAccount) {
+            throw errorResponder(
+                errorTypes.NOT_FOUND,
+                "Bank account not found / The account you wanted to withdraw from is not your account!"
+            );
+        }
+        if (bankAccount.balance < total) {
+            throw errorResponder(
+                errorTypes.BAD_REQUEST,
+                "Balance is not enough"
+            );
+        }
+
+        var transactionHistory = await onlineBankService.withdraw(bankAccount, total);
+        if (transactionHistory) {
+            return response.json({
+                code: 200,
+                message: "Succesfully withdraw money",
+                data: transactionHistory
+            });
+        }
+        throw new Error('Terjadi kesalahan saat melakukan withdraw')
+
     } catch (error) {
         return next(error);
     }
@@ -91,50 +121,93 @@ async function transfer(request, response, next) {
     const accountNumberDestination = request.body.account_number_destination;
     const total = request.body.total;
     const email = request.body.email;
-
     try {
-        var transactionHistory = await onlineBankService.transfer(accountNumber, accountNumberDestination, userId, total, email);
-        return response.json({
-            code: 200,
-            message: `Succesfully transfer money to ${email}`,
-            data: transactionHistory
-        });
+
+        const user = await onlineBankService.getUserByEmail(email);
+        if (!user) {
+            throw errorResponder(
+                errorTypes.NOT_FOUND,
+                "User destination is not found!"
+            );
+        }
+
+        if (user._id == userId) {
+            throw errorResponder(
+                errorTypes.BAD_REQUEST,
+                "You can't transfer to yourself."
+            );
+        }
+        
+
+        // sumber
+        let bankAccount = await onlineBankService.getBankAccountNumberAndUserId(accountNumber, userId);
+        // destination
+        let bankAccountDestination = await onlineBankService.getBankAccountNumberAndUserId(accountNumberDestination, user._id);
+
+        if (!bankAccount) {
+            throw errorResponder(
+                errorTypes.NOT_FOUND,
+                "Account number not found"
+            );
+        }
+
+        if (!bankAccountDestination) {
+            throw errorResponder(
+                errorTypes.NOT_FOUND,
+                "Account number Destination not found"
+            );
+        }
+
+        if (bankAccount.balance < total) {
+            throw errorResponder(
+                errorTypes.BAD_REQUEST,
+                "Balance is not enough"
+            );
+        }
+
+        if (total <= 0) {
+            throw errorResponder(
+                errorTypes.BAD_REQUEST,
+                "nominal must be greater than 0"
+            );
+        }
+
+        var transactionHistory = await onlineBankService.transfer(bankAccount, bankAccountDestination, total);
+        if (transactionHistory) {
+            return response.json({
+                code: 200,
+                message: `Succesfully transfer money to ${email}`,
+                data: transactionHistory
+            });
+        } else {
+            throw errorResponder(
+                errorTypes.SERVER,
+                "Failed to transfer please try again"
+            );
+        }
     } catch (error) {
         return next(error);
     }
 }
-
-
-
-async function update(request, response, next) {
-    const userId = request.userId;
-    const accountNumber = request.body.account_number;
-    const accountNumberOld = request.params.oldAccountNumber;
-
-    try {
-        var bankAccount = await onlineBankService.updateAccountNumber(accountNumberOld, accountNumber, userId);
-        return response.json({
-            code: 200,
-            message: `Succesfully update account number`,
-            data: bankAccount
-        });
-    } catch (error) {
-        return next(error);
-    }
-}
-
 
 async function deleteAccountNumber(request, response, next) {
     const userId = request.userId;
     const accountNumber = request.body.account_number;
 
     try {
-        await onlineBankService.deleteAccountNumber(accountNumber, userId);
-        return response.json({
-            code: 202,
-            message: `Succesfully delete account number`,
-            data: true
-        });
+        var isDelete = await onlineBankService.deleteAccountNumber(accountNumber, userId);
+        if (isDelete) {
+            return response.json({
+                code: 202,
+                message: 'Succesfully delete account number',
+                data: true
+            });
+        } else {
+            throw errorResponder(
+                errorTypes.NOT_FOUND,
+                "Bank account not found!"
+            );
+        }
     } catch (error) {
         return next(error);
     }
@@ -146,8 +219,51 @@ async function getBankAccountByAccountNumber(request, response, next) {
         const userId = request.userId;
         const accountNumber = request.params.id; // nomer rekening
         const bankAccount = await onlineBankService.getBankAccountByAccountNumber(accountNumber, userId);
+        if (bankAccount) {
+            return response.json({
+                bankAccount
+            });
+        }
+        throw errorResponder(
+            errorTypes.NOT_FOUND,
+            "Bank account not found!"
+        );
+    } catch (error) {
+        return next(error);
+    }
+}
+
+/**
+ * Handle change user's bank account number request
+ * @param {object} request - Express request object
+ * @param {object} response - Express response object
+ * @param {object} next - Express route middlewares
+ * @returns {object} Response object or pass an error to the next route
+ */
+async function updateAccNumber(request, response, next) {
+    const userId = request.userId;
+    const accountNumber = request.body.account_number;
+    const accountNumberOld = request.params.oldAccountNumber;
+
+    try {
+        var bankAccount = await onlineBankService.updateAccountNumber(accountNumberOld, accountNumber, userId);
+        // penagnanan ketika account bank tidak 
+        if (bankAccount == null) {
+            throw errorResponder(
+                errorTypes.NOT_FOUND,
+                "Bank account not found"
+            );
+        }
+        if (bankAccount == false) {
+            throw errorResponder(
+                errorTypes.BAD_REQUEST,
+                "Nomor rekening sudah digunakan sebelumnya."
+            );
+        }
         return response.json({
-            bankAccount
+            code: 200,
+            message: 'Succesfully update account number',
+            data: bankAccount
         });
     } catch (error) {
         return next(error);
@@ -158,10 +274,10 @@ module.exports = {
     create,
     getBankAccountByUserId,
     getTransactionHistory,
-    topUp,
+    deposit,
     getBankAccountByAccountNumber,
     withdraw,
     transfer,
-    update,
+    updateAccNumber,
     deleteAccountNumber
 };
