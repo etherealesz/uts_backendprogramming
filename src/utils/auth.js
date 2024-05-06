@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const config = require('../core/config');
 
+// Decodes user
 function verifyToken(req, res, next) {
   const token = req.headers['authorization'];
 

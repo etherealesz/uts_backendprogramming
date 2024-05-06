@@ -96,6 +96,7 @@ async function deposit(request, response, next) {
       userId,
       total
     );
+    // Throws error if the account is not found
     if (!bankAccount) {
       throw errorResponder(
         errorTypes.NOT_FOUND,
@@ -128,12 +129,14 @@ async function withdraw(request, response, next) {
       accountNumber,
       userId
     );
+    // Throws error if the account is not found
     if (!bankAccount) {
       throw errorResponder(
         errorTypes.NOT_FOUND,
         'Bank account not found / The account you wanted to withdraw from is not your account!'
       );
     }
+    // Throws error the balance from an account is not enough to be withdrawn
     if (bankAccount.balance < total) {
       throw errorResponder(errorTypes.BAD_REQUEST, 'Balance is not enough');
     }
@@ -170,6 +173,7 @@ async function transfer(request, response, next) {
   const email = request.body.email;
   try {
     const user = await onlineBankService.getUserByEmail(email);
+    // Throws error if user destination is not found
     if (!user) {
       throw errorResponder(
         errorTypes.NOT_FOUND,
@@ -177,6 +181,7 @@ async function transfer(request, response, next) {
       );
     }
 
+    // Throws error if a user tries to transfer to themselves
     if (user._id == userId) {
       throw errorResponder(
         errorTypes.BAD_REQUEST,
@@ -184,22 +189,23 @@ async function transfer(request, response, next) {
       );
     }
 
-    // sumber
     let bankAccount = await onlineBankService.getBankAccountNumberAndUserId(
       accountNumber,
       userId
     );
-    // destination
+
     let bankAccountDestination =
       await onlineBankService.getBankAccountNumberAndUserId(
         accountNumberDestination,
         user._id
       );
 
+    // Throws error if the account is not found
     if (!bankAccount) {
       throw errorResponder(errorTypes.NOT_FOUND, 'Account number not found');
     }
-
+    
+    // Throws error if the account destination is not found
     if (!bankAccountDestination) {
       throw errorResponder(
         errorTypes.NOT_FOUND,
@@ -207,10 +213,12 @@ async function transfer(request, response, next) {
       );
     }
 
+      // Throws error if the account balance is less than the total that's trying to be sent
     if (bankAccount.balance < total) {
       throw errorResponder(errorTypes.BAD_REQUEST, 'Balance is not enough');
     }
 
+    // Throws error if the total is less or equals than 0
     if (total <= 0) {
       throw errorResponder(
         errorTypes.BAD_REQUEST,

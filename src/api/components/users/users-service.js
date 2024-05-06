@@ -15,7 +15,7 @@ async function getUsers(
 ) {
   let users = await usersRepository.getUsers();
 
-  // Pengerjaan filtering
+  // Will return the searching / filtering
   if (!!searchField && !!searchValue) {
     users = users.filter((user) => {
       const field = user[searchField]?.toLowerCase(); // optional chaining
@@ -23,7 +23,7 @@ async function getUsers(
     });
   }
 
-  // Pengerjaan sorting
+  // Will return the sorted data
   if (!!sortField && !!sortOrder) {
     const sortFn = (a, b) => {
       const fieldA = a[sortField];
@@ -35,7 +35,7 @@ async function getUsers(
     users.sort(sortFn);
   }
 
-  // Total Items yang didapat dari total length users
+  // Total Items from total users length
   const totalItems = users.length;
 
   // Pagination
@@ -44,7 +44,7 @@ async function getUsers(
   const endIndex = Math.min(startIndex + (pageSize || totalItems), totalItems);
   const paginatedUsers = users.slice(startIndex, endIndex);
 
-  // Mapping data menjadi data yang sudah terpaginated
+  // Mapping the data that has been paginated
   const results = paginatedUsers.map((user) => ({
     id: user.id,
     name: user.name,
