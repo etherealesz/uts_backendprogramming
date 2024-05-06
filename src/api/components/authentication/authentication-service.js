@@ -49,7 +49,7 @@ async function handleFailedLogin(email) {
 
   // If attempts is more / equal than 5 and haven't been given timer, then it will be given timer
   if (attempts[email] >= 5 && !lockTill) {
-    lockTill = moment().add(10, 'seconds').format('YYYY-MM-DD HH:mm:ss');
+    lockTill = moment().add(30, 'minutes').format('YYYY-MM-DD HH:mm:ss');
   }
 
   // If attempts are less than 5, then it will count the time each time they fail.
