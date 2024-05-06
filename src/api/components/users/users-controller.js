@@ -10,7 +10,7 @@ const { errorResponder, errorTypes } = require('../../../core/errors');
  */
 async function getUsers(request, response, next) {
   try {
-    const { page_number = 1, page_size, search, sort } = request.query;
+    const { page_number = 1, page_size, search, sort= 'email:asc' } = request.query;
 
     // Ternary used, so when it's empty it will still return all the data.
     const pageNumber = page_number ? parseInt(page_number) : 1;
